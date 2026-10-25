@@ -33,6 +33,12 @@ import {
   getAdminCoupons,
   createCoupon,
   deleteCoupon,
+  // Banners
+  getAdminBanners,
+  createBanner,
+  updateBanner,
+  deleteBanner,
+  toggleBannerStatus,
   // Settings & Banks
   getAllSettings,
   saveSettings,
@@ -86,6 +92,13 @@ router.put('/users/:id/role', updateUserRole);
 router.get('/coupons', getAdminCoupons);
 router.post('/coupons', createCoupon);
 router.delete('/coupons/:id', deleteCoupon);
+
+// Banners
+router.get('/banners', getAdminBanners);
+router.post('/banners', createBanner);
+router.put('/banners/:id', updateBanner);
+router.delete('/banners/:id', deleteBanner);
+router.put('/banners/:id/status', toggleBannerStatus);
 
 // Settings
 router.get('/settings', getAllSettings);

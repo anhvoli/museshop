@@ -10,14 +10,16 @@ import {
   Flame,
   ArrowUpDown,
   Tag,
-  CheckCircle2,
-  Zap
+  CheckCircle2, 
+  Zap,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const Home = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const selectedCategory = searchParams.get('category_id') || '';
@@ -26,6 +28,7 @@ const Home = () => {
 
   useEffect(() => {
     fetchCategories();
+    fetchBanners();
   }, []);
 
   useEffect(() => {
@@ -40,6 +43,17 @@ const Home = () => {
       }
     } catch (err) {
       console.error('Fetch categories error:', err);
+    }
+  };
+
+  const fetchBanners = async () => {
+    try {
+      const res = await api.get('/settings/banners');
+      if (res.data.success) {
+        setBanners(res.data.banners || []);
+      }
+    } catch (err) {
+      console.error('Fetch banners error:', err);
     }
   };
 
@@ -78,6 +92,13 @@ const Home = () => {
     setSearchParams(next);
   };
 
+  const formatImageSrc = (src) => {
+    if (!src) return '';
+    if (src.startsWith('http://') || src.startsWith('https://')) return src;
+    if (src.startsWith('/')) return src;
+    return `/${src}`;
+  };
+
   return (
     <div className="space-y-12">
       
@@ -113,6 +134,57 @@ const Home = () => {
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-purple-500/20 blur-3xl pointer-events-none"></div>
       </section>
+
+      {/* Promotional Banners Grid */}
+      {banners.length > 0 && (
+        <section className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            {banners.map((b) => {
+              const card = (
+                <div className="relative group overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 shadow-sm hover:shadow-xl transition-all duration-300 hover:border-indigo-400 dark:hover:border-indigo-500/50">
+                  <div className="aspect-[16/9] w-full overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center">
+                    <img
+                      src={formatImageSrc(b.image)}
+                      alt={b.title || 'Banner'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://placehold.co/400x225/1e293b/94a3b8?text=Banner';
+                      }}
+                    />
+                  </div>
+                  {b.title && (
+                    <div className="p-2.5 bg-white/95 dark:bg-slate-900/95 border-t border-slate-100 dark:border-slate-800">
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {b.title}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+
+              if (b.link) {
+                return (
+                  <a
+                    key={b.id}
+                    href={b.link}
+                    target={b.link.startsWith('http') ? '_blank' : '_self'}
+                    rel="noopener noreferrer"
+                    className="block transition-transform hover:-translate-y-1"
+                  >
+                    {card}
+                  </a>
+                );
+              }
+              return (
+                <div key={b.id} className="transition-transform hover:-translate-y-0.5">
+                  {card}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Category Pills Bar */}
       <section className="space-y-4">

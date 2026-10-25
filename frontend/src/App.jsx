@@ -24,6 +24,7 @@ import AdminStock from './pages/admin/AdminStock';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminBanners from './pages/admin/AdminBanners';
 import AdminSettings from './pages/admin/AdminSettings';
 
 const ProtectedRoute = ({ children }) => {
@@ -83,6 +84,7 @@ function App() {
               <Route path="orders" element={<AdminOrders />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="coupons" element={<AdminCoupons />} />
+              <Route path="banners" element={<AdminBanners />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 

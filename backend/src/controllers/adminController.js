@@ -1004,3 +1004,149 @@ export const deleteBank = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Lỗi xóa ngân hàng' });
   }
 };
+
+
+// ==========================================
+// 9. BANNERS MANAGEMENT
+// ==========================================
+export const getAdminBanners = async (req, res) => {
+  try {
+    const db = getDb();
+    const banners = await db.collection('banners')
+      .find({})
+      .sort({ sort_order: -1, id: -1 })
+      .toArray();
+
+    return res.json({
+      success: true,
+      banners: banners.map(b => ({
+        id: b.id,
+        title: b.title || '',
+        image: b.image || '',
+        link: b.link || '',
+        position: b.position || 'below_sliders',
+        sort_order: Number(b.sort_order) || 0,
+        status: Number(b.status) === 1 ? 1 : 0,
+        created_at: b.created_at,
+        updated_at: b.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('Get admin banners error:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi tải danh sách banner' });
+  }
+};
+
+export const createBanner = async (req, res) => {
+  try {
+    const { title, image, link, position, sort_order, status } = req.body;
+    if (!image) {
+      return res.status(400).json({ success: false, message: 'Vui lòng cung cấp hình ảnh banner' });
+    }
+
+    const db = getDb();
+    const newId = await getNextSequence('banners');
+
+    const newBanner = {
+      id: newId,
+      title: (title || '').trim(),
+      image: (image || '').trim(),
+      link: (link || '').trim(),
+      position: position || 'below_sliders',
+      sort_order: Number(sort_order) || 0,
+      status: status !== undefined ? (Number(status) === 1 ? 1 : 0) : 1,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    await db.collection('banners').insertOne(newBanner);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Thêm banner thành công!',
+      banner: newBanner
+    });
+  } catch (error) {
+    console.error('Create banner error:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi tạo banner' });
+  }
+};
+
+export const updateBanner = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, image, link, position, sort_order, status } = req.body;
+
+    const db = getDb();
+    const banner = await db.collection('banners').findOne({ id: Number(id) });
+    if (!banner) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy banner' });
+    }
+
+    const updateFields = {
+      title: title !== undefined ? String(title).trim() : banner.title,
+      image: image !== undefined ? String(image).trim() : banner.image,
+      link: link !== undefined ? String(link).trim() : banner.link,
+      position: position !== undefined ? position : banner.position,
+      sort_order: sort_order !== undefined ? Number(sort_order) : banner.sort_order,
+      status: status !== undefined ? (Number(status) === 1 ? 1 : 0) : banner.status,
+      updated_at: new Date()
+    };
+
+    await db.collection('banners').updateOne(
+      { id: Number(id) },
+      { $set: updateFields }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Cập nhật banner thành công!',
+      banner: { ...banner, ...updateFields }
+    });
+  } catch (error) {
+    console.error('Update banner error:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi cập nhật banner' });
+  }
+};
+
+export const deleteBanner = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getDb();
+    const result = await db.collection('banners').deleteOne({ id: Number(id) });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy banner để xóa' });
+    }
+
+    return res.json({ success: true, message: 'Đã xóa banner thành công!' });
+  } catch (error) {
+    console.error('Delete banner error:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi xóa banner' });
+  }
+};
+
+export const toggleBannerStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getDb();
+    const banner = await db.collection('banners').findOne({ id: Number(id) });
+    if (!banner) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy banner' });
+    }
+
+    const newStatus = Number(banner.status) === 1 ? 0 : 1;
+    await db.collection('banners').updateOne(
+      { id: Number(id) },
+      { $set: { status: newStatus, updated_at: new Date() } }
+    );
+
+    return res.json({
+      success: true,
+      message: newStatus === 1 ? 'Đã bật hiển thị banner' : 'Đã ẩn banner',
+      status: newStatus
+    });
+  } catch (error) {
+    console.error('Toggle banner status error:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi thay đổi trạng thái banner' });
+  }
+};

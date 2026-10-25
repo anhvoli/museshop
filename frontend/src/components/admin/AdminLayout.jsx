@@ -9,6 +9,7 @@ import {
   ShoppingCart, 
   Users, 
   Ticket, 
+  Image as ImageIcon,
   Settings, 
   LogOut, 
   ArrowLeft,
@@ -32,6 +33,7 @@ const AdminLayout = () => {
     { name: 'Quản lý Đơn hàng', path: '/admin/orders', icon: ShoppingCart },
     { name: 'Quản lý Thành viên', path: '/admin/users', icon: Users },
     { name: 'Mã giảm giá', path: '/admin/coupons', icon: Ticket },
+    { name: 'Quản lý Banner', path: '/admin/banners', icon: ImageIcon },
     { name: 'Cài đặt & Ngân hàng', path: '/admin/settings', icon: Settings },
   ];
 
@@ -104,70 +106,72 @@ const AdminLayout = () => {
             })}
           </nav>
 
-          {/* Footer of Sidebar */}
-          <div className="p-4 border-t border-slate-800/80 space-y-2">
+          {/* User profile & Back to Store */}
+          <div className="p-4 border-t border-slate-800 space-y-3">
             <Link
               to="/"
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+              className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 text-slate-400" />
-              <span>Về trang mua hàng</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Về Trang Cửa Hàng</span>
             </Link>
 
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Đăng xuất</span>
-            </button>
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs uppercase border border-indigo-500/30">
+                  {user?.username?.[0] || 'A'}
+                </div>
+                <div className="truncate">
+                  <p className="text-xs font-semibold text-white truncate">{user?.username}</p>
+                  <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={logout}
+                title="Đăng xuất"
+                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
+        
         {/* Top Navbar */}
-        <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30">
-          <div className="flex items-center gap-3">
+        <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900"
+              className="lg:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
-              <span>Hệ thống Quản trị</span>
-              <span>/</span>
-              <span className="text-slate-200 font-semibold capitalize">
-                {location.pathname.replace('/admin', '').replace('/', '') || 'Tổng quan'}
-              </span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Hệ thống trực tuyến (MongoDB Atlas)</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="text-slate-300 font-medium">Hệ thống:</span>
-              <span className="text-emerald-400 font-bold">Online</span>
-            </div>
-
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-800">
-              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
-                {user?.username?.[0] || 'A'}
-              </div>
-              <div className="hidden md:block text-left text-xs">
-                <p className="font-bold text-slate-200">{user?.username}</p>
-                <p className="text-[10px] text-slate-400">Super Administrator</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="px-3 py-1.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Super Admin</span>
             </div>
           </div>
         </header>
 
-        {/* Content Body */}
-        <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto">
-          <Outlet />
+        {/* Dynamic Page Content */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
+
       </div>
 
     </div>
