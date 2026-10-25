@@ -1,0 +1,28 @@
+{
+  "name": "cpanel-webmail-project",
+  "version": "1.0.0",
+  "description": "Fullstack React + Node.js Webmail and cPanel UAPI Mailbox Manager",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "server": "node server.js",
+    "client": "vite",
+    "build": "vite build",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.2",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.4"
+  }
+}
