@@ -671,9 +671,12 @@ export const updateOrderStatus = async (req, res) => {
 
     // Hoàn tiền nếu được yêu cầu
     if (refund && order.payment_status === 'paid' && order.status !== 'cancelled') {
+      const targetUser = await db.collection('users').findOne({ id: Number(order.user_id) });
+      const refundAmount = parseFloat(order.final_amount || 0);
+      const newMoney = parseFloat(targetUser?.money || 0) + refundAmount;
       await db.collection('users').updateOne(
         { id: Number(order.user_id) },
-        { $inc: { money: parseFloat(order.final_amount || 0) } }
+        { $set: { money: Number(newMoney), update_date: new Date() } }
       );
       await db.collection('product_orders').updateOne(
         { id: Number(id) },
@@ -773,11 +776,15 @@ export const adjustUserBalance = async (req, res) => {
     const newMoney = Math.max(0, currentMoney + diff);
     const incTotal = diff > 0 ? diff : 0;
 
+    const currentTotal = parseFloat(user.total_money || 0);
     await db.collection('users').updateOne(
       { id: Number(id) },
       {
-        $set: { money: newMoney },
-        $inc: { total_money: incTotal }
+        $set: {
+          money: Number(newMoney),
+          total_money: Number(currentTotal + incTotal),
+          update_date: new Date()
+        }
       }
     );
 

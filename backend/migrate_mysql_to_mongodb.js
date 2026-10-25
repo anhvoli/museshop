@@ -66,6 +66,15 @@ async function migrate() {
             maxIds[tableName] = doc.id;
           }
         }
+
+        // Đảm bảo các trường tiền tệ / số liệu là kiểu Number
+        const numericKeys = ['money', 'total_money', 'debit', 'price', 'cost_price', 'sale_price', 'total_price', 'final_amount', 'sold', 'amount'];
+        for (const key of numericKeys) {
+          if (doc[key] !== undefined && doc[key] !== null) {
+            doc[key] = Number(doc[key]);
+          }
+        }
+
         return doc;
       });
 

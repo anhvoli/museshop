@@ -56,11 +56,14 @@ export const checkout = async (req, res) => {
     }
 
     // 4. Trừ tiền tài khoản
+    const newBalance = Math.max(0, currentBalance - totalPrice);
     await db.collection('users').updateOne(
       { id: Number(userId) },
       {
-        $inc: { money: -totalPrice },
-        $set: { update_date: new Date() }
+        $set: {
+          money: Number(newBalance),
+          update_date: new Date()
+        }
       }
     );
 

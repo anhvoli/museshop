@@ -40,7 +40,7 @@ export const login = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Tài khoản của bạn đã bị khóa. Lý do: ' + (user.reason_banned || 'Không có') });
     }
 
-    const isMatch = comparePassword(password, user.password);
+    const isMatch = comparePassword(password, user.password, user.username);
     if (!isMatch) {
       return res.status(400).json({ success: false, message: 'Tên đăng nhập hoặc mật khẩu không chính xác' });
     }
