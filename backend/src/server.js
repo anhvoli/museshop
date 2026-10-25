@@ -50,20 +50,23 @@ if (fs.existsSync(frontendPublicPath)) {
   app.use('/public', express.static(originalPublicPath));
 }
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/wallet', walletRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/settings', settingsRoutes);
-app.use('/api/mail', mailRoutes);
+// API Routes (Mounted on both /api and root to ensure 100% compatibility across Vercel and local)
+const mountRoutes = (prefix = '') => {
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/categories`, categoryRoutes);
+  app.use(`${prefix}/products`, productRoutes);
+  app.use(`${prefix}/orders`, orderRoutes);
+  app.use(`${prefix}/wallet`, walletRoutes);
+  app.use(`${prefix}/admin`, adminRoutes);
+  app.use(`${prefix}/settings`, settingsRoutes);
+  app.use(`${prefix}/mail`, mailRoutes);
+  app.get(`${prefix}/health`, (req, res) => {
+    res.json({ status: 'ok', database: 'mongodb', time: new Date() });
+  });
+};
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', database: 'mongodb', time: new Date() });
-});
+mountRoutes('/api');
+mountRoutes('');
 
 // Error handling middleware
 app.use((err, req, res, next) => {
