@@ -138,7 +138,72 @@ app.post('/api/cpanel/mailboxes/password', async (req, res) => {
 });
 
 // ==========================================
-// 3. IMAP: ĐỌC THƯ
+// 3. CHUẨN HÓA REST API: /api/mail/...
+// ==========================================
+
+// GET /api/mail/list
+app.get('/api/mail/list', async (req, res) => {
+  try {
+    const cpanel = getCpanelInstance();
+    const mailboxes = await cpanel.listMailboxes();
+    res.json({ success: true, total: mailboxes.length, mailboxes });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/mail/create
+app.post('/api/mail/create', async (req, res) => {
+  try {
+    const { email, password, quota, domain } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Vui lòng cung cấp tên hộp mail (email)' });
+    }
+    const cpanel = getCpanelInstance();
+    const result = await cpanel.createMailbox({
+      email,
+      password: password || ('Mk@' + Math.random().toString(36).slice(2, 8) + '!1A'),
+      quota: Number(quota) || 1024,
+      domain
+    });
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE /api/mail/delete & DELETE /api/mail/:email
+app.delete(['/api/mail/delete', '/api/mail/:email'], async (req, res) => {
+  try {
+    const email = req.query.email || req.params.email || req.body.email;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email cần xóa' });
+    }
+    const cpanel = getCpanelInstance();
+    const result = await cpanel.deleteMailbox(email);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/mail/password
+app.post('/api/mail/password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email và newPassword' });
+    }
+    const cpanel = getCpanelInstance();
+    const result = await cpanel.changePassword(email, newPassword);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// 4. IMAP: ĐỌC THƯ & TỰ ĐỘNG BÓC TÁCH MÃ OTP
 // ==========================================
 app.post('/api/mail/inbox', async (req, res) => {
   try {
@@ -165,8 +230,60 @@ app.post('/api/mail/inbox', async (req, res) => {
   }
 });
 
+// Tự động quét và lấy mã OTP từ thư mới nhất
+app.post(['/api/mail/otp', '/api/mail/read-otp'], async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Vui lòng cung cấp email và password' });
+    }
+
+    const imap = new ImapClient({
+      host: process.env.IMAP_HOST || 'nckh.anhvoli.id.vn',
+      port: Number(process.env.IMAP_PORT || 993),
+      user: email.trim(),
+      password: password
+    });
+
+    const inbox = await imap.getInbox(5);
+    if (!inbox.messages || inbox.messages.length === 0) {
+      return res.json({ success: false, message: 'Hộp thư hiện đang trống.' });
+    }
+
+    const latest = inbox.messages[0];
+    const fullContent = `${latest.subject} ${latest.bodyText}`;
+
+    const patterns = [
+      /(?:code|mã|otp|verification|pin)[^\d]{1,15}(\d{4,8})\b/i,
+      /\b(\d{6})\b/,
+      /\b(\d{4})\b/,
+      /\b(\d{8})\b/
+    ];
+
+    let otp = null;
+    for (const pat of patterns) {
+      const match = fullContent.match(pat);
+      if (match && match[1]) {
+        otp = match[1];
+        break;
+      }
+    }
+
+    res.json({
+      success: true,
+      otp,
+      subject: latest.subject,
+      from: latest.from,
+      date: latest.date,
+      preview: latest.snippet
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Lỗi quét OTP: ' + err.message });
+  }
+});
+
 // ==========================================
-// 4. SMTP: GỬI THƯ THỬ NGHIỆM
+// 5. SMTP: GỬI THƯ THỬ NGHIỆM
 // ==========================================
 app.post('/api/mail/send', async (req, res) => {
   try {

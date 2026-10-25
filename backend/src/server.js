@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
 import fs from 'fs';
 
 import { connectDB } from './config/db.js';
@@ -14,6 +13,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
+import mailRoutes from './routes/mailRoutes.js';
 
 dotenv.config();
 
@@ -58,6 +58,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/mail', mailRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -70,24 +71,19 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Đã xảy ra lỗi trên máy chủ' });
 });
 
-// If running as standard standalone Node process (not serverless)
-if (process.env.VERCEL !== '1' && !process.env.VERCEL_ENV) {
-  connectDB()
-    .then(() => {
-      app.listen(PORT, () => {
-        console.log(`🚀 Shopkey Node.js Backend API is running on http://localhost:${PORT} (Powered by MongoDB Atlas)`);
-      });
-    })
-    .catch((err) => {
-      console.error('Không thể khởi động server do lỗi kết nối MongoDB:', err);
-      process.exit(1);
+// Start server
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`=========================================`);
+      console.log(`🚀 SHOPKEY API Server running on port ${PORT}`);
+      console.log(`👉 http://localhost:${PORT}`);
+      console.log(`📧 Mail API: http://localhost:${PORT}/api/mail`);
+      console.log(`=========================================`);
     });
+  }).catch((err) => {
+    console.error('Failed to start server:', err);
+  });
 }
 
-// Vercel Serverless Function Handler
-export default async function handler(req, res) {
-  await connectDB();
-  return app(req, res);
-}
-
-export { app };
+export default app;
